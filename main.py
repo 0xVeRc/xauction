@@ -11,12 +11,7 @@ logger = logging.getLogger(__name__)
 BOT_TOKEN = '7318782651:AAHtdSnQyf0SPBD3GEPJ-vxBxOrdxUmjA44'
 
 # Items for auction
-auction_items = [        "name": test1,
-        "start_price": "110",
-        "description": description,
-        "highest_bid": "110",
-        "highest_bidder": None,
-        "photo": "https://i0.wp.com/luxway.ae/wp-content/uploads/2023/12/img_8054.jpeg?" ]
+auction_items = []
 
 # Registered users
 registered_users = {}
