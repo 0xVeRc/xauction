@@ -101,7 +101,7 @@ def bid(update: Update, context: CallbackContext) -> None:
 
 def main() -> None:
     """Start the bot."""
-    updater = Updater(BOT_TOKEN, use_context=True)
+    updater = Updater('7318782651:AAHtdSnQyf0SPBD3GEPJ-vxBxOrdxUmjA44', use_context=True)
     dispatcher = updater.dispatcher
     
     # Handlers
