@@ -93,8 +93,7 @@ def list_items(update: Update, context: CallbackContext) -> None:
         for index, item in enumerate(auction_items)
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.
-reply_text('Here are the items for auction:', reply_markup=reply_markup)
+    update.message.reply_text('Here are the items for auction:', reply_markup=reply_markup)
 
 def button(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
@@ -109,7 +108,6 @@ def button(update: Update, context: CallbackContext) -> None:
     
     media = InputMediaPhoto(media=item['photo'], caption=text)
     query.edit_message_media(media=media)
-
 def bid(update: Update, context: CallbackContext) -> None:
     user = update.message.from_user
     if user.id not in registered_users:
