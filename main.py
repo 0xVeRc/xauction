@@ -1,7 +1,6 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler, Filters, CallbackContext
 import logging
-import os
 
 # Enable logging
 logging.basicConfig(
@@ -9,20 +8,26 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Your bot token
-BOT_TOKEN = os.getenv('7318782651:AAHtdSnQyf0SPBD3GEPJ-vxBxOrdxUmjA44')
+BOT_TOKEN = '7318782651:AAHtdSnQyf0SPBD3GEPJ-vxBxOrdxUmjA44'
 
 # Items for auction
-auction_items = [
-    {"name": "Item 1", "start_price": 10.0, "description": "Description of Item 1", "highest_bid": 10.0, "highest_bidder": None, "photo": "https://i0.wp.com/luxway.ae/wp-content/uploads/2023/12/img_8004.jpeg"},
-    {"name": "Item 2", "start_price": 20.0, "description": "Description of Item 2", "highest_bid": 20.0, "highest_bidder": None, "photo": "https://i0.wp.com/luxway.ae/wp-content/uploads/2023/12/img_8054.jpeg"},
-    # Add more items here
-]
+auction_items = []
 
 # Registered users
 registered_users = {}
 
+# Owners
+owners = ["@ojjrr", "@uuuaaaeee"]
+
 def start(update: Update, context: CallbackContext) -> None:
-    update.message.reply_text('Welcome to the auction! Please register with /register <name> <phone_number_with_country_code> <email> to start bidding.')
+    user = update.message.from_user
+    if user.username in owners:
+        update.message.reply_text('Welcome, owner! You can add items using /add <name> <start_price> <description> <photo_url>')
+    else:
+        if user.id not in registered_users:
+            update.message.reply_text('Welcome to the auction! Please register with /register <name> <phone_number_with_country_code> <email> to start bidding.')
+        else:
+            update.message.reply_text('Welcome back! Use /list to see items for auction.')
 
 def register(update: Update, context: CallbackContext) -> None:
     user = update.message.from_user
@@ -43,6 +48,44 @@ def register(update: Update, context: CallbackContext) -> None:
     }
 
     update.message.reply_text(f'Registration successful! Welcome, {name}.')
+    list_items(update, context)
+
+def add_item(update: Update, context: CallbackContext) -> None:
+    user = update.message.from_user
+    if user.username not in owners:
+        update.message.reply_text('You are not authorized to add items.')
+        return
+
+    message = update.message.text.split(maxsplit=4)
+    if len(message) < 5:
+        update.message.reply_text('Usage: /add <name> <start_price> <description> <photo_url>')
+        return
+
+    name = message[1]
+    try:
+        start_price = float(message[2])
+    except ValueError:
+        update.message.reply_text('Invalid start price.')
+        return
+
+    description = message[3]
+    photo_url = message[4]
+
+    item = {
+        "name": name,
+        "start_price": start_price,
+        "description": description,
+        "highest_bid": start_price,
+        "highest_bidder": None,
+        "photo": photo_url
+    }
+    auction_items.append(item)
+
+    update.message.reply_text(f'Item {name} added successfully!')
+
+    for user_id in registered_users.keys():
+        context.bot.send_message(chat_id=user_id, text=f'New item added for auction: {name}')
+        context.bot.send_photo(chat_id=user_id, photo=photo_url, caption=f"{name}\nStarting Price: ${start_price}\nDescription: {description}")
 
 def list_items(update: Update, context: CallbackContext) -> None:
     keyboard = [
@@ -50,7 +93,8 @@ def list_items(update: Update, context: CallbackContext) -> None:
         for index, item in enumerate(auction_items)
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text('Here are the items for auction:', reply_markup=reply_markup)
+    update.message.
+reply_text('Here are the items for auction:', reply_markup=reply_markup)
 
 def button(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
@@ -107,6 +151,7 @@ def main() -> None:
     # Handlers
     dispatcher.add_handler(CommandHandler("start", start))
     dispatcher.add_handler(CommandHandler("register", register))
+    dispatcher.add_handler(CommandHandler("add", add_item))
     dispatcher.add_handler(CommandHandler("list", list_items))
     dispatcher.add_handler(CommandHandler("bid", bid))
     dispatcher.add_handler(CallbackQueryHandler(button))
