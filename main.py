@@ -86,3 +86,35 @@ def bid(update: Update, context: CallbackContext) -> None:
     
     if item_number < 0 or item_number >= len(auction_items):
         update.message.reply_text('Invalid item number.')
+return
+    
+    item = auction_items[item_number]
+    if bid_amount <= item['highest_bid']:
+        update.message.reply_text(f'Your bid must be higher than the current highest bid of ${item["highest_bid"]}.')
+        return
+    
+    item['highest_bid'] = bid_amount
+    item['highest_bidder'] = registered_users[user.id]['name']
+
+    for user_id in registered_users.keys():
+        context.bot.send_message(chat_id=user_id, text=f'New bid of ${bid_amount} for {item["name"]} by {registered_users[user.id]["name"]}')
+
+def main() -> None:
+    """Start the bot."""
+    updater = Updater(BOT_TOKEN, use_context=True)
+    dispatcher = updater.dispatcher
+    
+    # Handlers
+    dispatcher.add_handler(CommandHandler("start", start))
+    dispatcher.add_handler(CommandHandler("register", register))
+    dispatcher.add_handler(CommandHandler("list", list_items))
+    dispatcher.add_handler(CommandHandler("bid", bid))
+    dispatcher.add_handler(CallbackQueryHandler(button))
+    
+    # Start polling for updates from Telegram
+    updater.start_polling()
+    updater.idle()
+
+if __name__ == '__main__':
+    main()
+
