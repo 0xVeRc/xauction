@@ -1,7 +1,7 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler, Filters, CallbackContext
 import logging
-import random
+import os
 
 # Enable logging
 logging.basicConfig(
@@ -9,7 +9,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Your bot token
-BOT_TOKEN = '7318782651:AAHtdSnQyf0SPBD3GEPJ-vxBxOrdxUmjA44'
+BOT_TOKEN = os.getenv('7318782651:AAHtdSnQyf0SPBD3GEPJ-vxBxOrdxUmjA44')
 
 # Items for auction
 auction_items = [
@@ -86,7 +86,7 @@ def bid(update: Update, context: CallbackContext) -> None:
     
     if item_number < 0 or item_number >= len(auction_items):
         update.message.reply_text('Invalid item number.')
-return
+        return
     
     item = auction_items[item_number]
     if bid_amount <= item['highest_bid']:
@@ -117,4 +117,3 @@ def main() -> None:
 
 if __name__ == '__main__':
     main()
-
