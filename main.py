@@ -7,7 +7,7 @@ def start(update: Update, context: CallbackContext) -> None:
 
 def main():
     # Your bot's API token
-    api_token = '7318782651:AAHtdSnQyf0SPBD3GEPJ-vxBxOrdxUmjA44'
+    api_token = '7251892423:AAFsZdxT5iN6nHSzfQinr1VNhutxLvx8VrM'
 
     # Create the Updater and pass it your bot's token
     updater = Updater(api_token)
