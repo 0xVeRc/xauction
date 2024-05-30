@@ -6,5 +6,5 @@ services:
     buildCommand: "pip install -r requirements.txt"
     startCommand: "python main.py"
     envVars:
-      - key: 7251892423:AAFsZdxT5iN6nHSzfQinr1VNhutxLvx8VrM
-        value: 7251892423:AAFsZdxT5iN6nHSzfQinr1VNhutxLvx8VrM
+      - key: '7318782651:AAHtdSnQyf0SPBD3GEPJ-vxBxOrdxUmjA44'
+        value: '7318782651:AAHtdSnQyf0SPBD3GEPJ-vxBxOrdxUmjA44'
