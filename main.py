@@ -13,8 +13,8 @@ BOT_TOKEN = '7318782651:AAHtdSnQyf0SPBD3GEPJ-vxBxOrdxUmjA44'
 
 # Items for auction
 auction_items = [
-    {"name": "Item 1", "start_price": 10.0, "description": "Description of Item 1", "highest_bid": 10.0, "highest_bidder": None, "photo": "https://example.com/photo1.jpg"},
-    {"name": "Item 2", "start_price": 20.0, "description": "Description of Item 2", "highest_bid": 20.0, "highest_bidder": None, "photo": "https://example.com/photo2.jpg"},
+    {"name": "Item 1", "start_price": 10.0, "description": "Description of Item 1", "highest_bid": 10.0, "highest_bidder": None, "photo": "https://i0.wp.com/luxway.ae/wp-content/uploads/2023/12/img_8004.jpeg"},
+    {"name": "Item 2", "start_price": 20.0, "description": "Description of Item 2", "highest_bid": 20.0, "highest_bidder": None, "photo": "https://i0.wp.com/luxway.ae/wp-content/uploads/2023/12/img_8054.jpeg"},
     # Add more items here
 ]
 
