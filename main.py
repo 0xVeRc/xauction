@@ -17,7 +17,7 @@ auction_items = []
 registered_users = {}
 
 # Owners
-owners = ["@ojjrr", "@uuuaaaeee"]
+owners = ["@ojjrr", "@uuuaaaeee","@luxway1"]
 
 def start(update: Update, context: CallbackContext) -> None:
     user = update.message.from_user
