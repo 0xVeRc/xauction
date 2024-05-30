@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: my-python-bot
+    env: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python main.py"
+    envVars:
+      - key: 7251892423:AAFsZdxT5iN6nHSzfQinr1VNhutxLvx8VrM
+        value: 7251892423:AAFsZdxT5iN6nHSzfQinr1VNhutxLvx8VrM
