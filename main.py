@@ -104,6 +104,6 @@ if __name__ == '__main__':
         
             apihelper. set_stream_handler(log_file)
             
-        my_bot = botapi.Bot(bot_token=bot_token)
+        my_bot = botapi.Bot(bot_token='7318782651:AAHtdSnQyf0SPBD3GEPJ-vxBxOrdxUmjA44')
 
     app.run(debug=True)
