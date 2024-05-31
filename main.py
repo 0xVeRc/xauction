@@ -3,6 +3,8 @@ from telegram import Update, InputMediaPhoto
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext, Dispatcher
 from telegram import Bot
 from flask import Flask, request, jsonify
+import threading
+import time
 import pandas as pd
 
 # Enable logging
@@ -23,7 +25,9 @@ WEBHOOK_URL = 'https://your-ngrok-url.ngrok.io'
 
 app = Flask(__name__)
 bot = Bot(TOKEN)
-dispatcher = Dispatcher(bot, None, workers=0)
+
+# Create the dispatcher with a worker thread
+dispatcher = Dispatcher(bot, None, workers=1)
 
 def start(update: Update, context: CallbackContext) -> None:
     """Send a message when the command /start is issued."""
@@ -122,6 +126,12 @@ def webhook() -> str:
     dispatcher.process_update(update)
     return 'ok'
 
+def run(dispatcher):
+    """Run the dispatcher to process updates."""
+    while True:
+        dispatcher.start()
+        time.sleep(10)
+
 def main() -> None:
     """Start the bot."""
     global dispatcher
@@ -134,6 +144,11 @@ def main() -> None:
     # Set the webhook
     bot.set_webhook(f"{WEBHOOK_URL}/{TOKEN}")
 
+    # Start a thread to run the dispatcher
+    dispatcher_thread = threading.Thread(target=run, args=(dispatcher,))
+    dispatcher_thread.start()
+
+    # Run the Flask app
     app.run(port=PORT)
 
 if __name__ == '__main__':
