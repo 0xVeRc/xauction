@@ -1,6 +1,8 @@
 import logging
 from telegram import Update, InputMediaPhoto
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext, Dispatcher
+from telegram import Bot
+from flask import Flask, request, jsonify
 import pandas as pd
 
 # Enable logging
@@ -15,6 +17,13 @@ users_data = {}
 
 # Constants
 OWNER_USERNAME = '@ojjrr'
+TOKEN = "7318782651:AAHtdSnQyf0SPBD3GEPJ-vxBxOrdxUmjA44"
+PORT = 8443
+WEBHOOK_URL = 'https://your-ngrok-url.ngrok.io'
+
+app = Flask(__name__)
+bot = Bot(TOKEN)
+dispatcher = Dispatcher(bot, None, workers=0)
 
 def start(update: Update, context: CallbackContext) -> None:
     """Send a message when the command /start is issued."""
@@ -106,19 +115,26 @@ def notify_users_about_bid(context: CallbackContext, product) -> None:
     for username in users_data:
         context.bot.send_message(chat_id=username, text=f"{product['product_name']} - New Bid: ${product['current_bid']} by {product['current_bidder']}")
 
+@app.route(f'/{TOKEN}', methods=['POST'])
+def webhook() -> str:
+    """Process webhook calls."""
+    update = Update.de_json(request.get_json(force=True), bot)
+    dispatcher.process_update(update)
+    return 'ok'
+
 def main() -> None:
     """Start the bot."""
-    updater = Updater('7318782651:AAHtdSnQyf0SPBD3GEPJ-vxBxOrdxUmjA44', use_context=True)
-    dispatcher = updater.dispatcher
-
+    global dispatcher
     dispatcher.add_handler(CommandHandler("start", start))
     dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, register))
     dispatcher.add_handler(CommandHandler("add_product", add_product, Filters.user(username=OWNER_USERNAME)))
     dispatcher.add_handler(CommandHandler("products", products))
     dispatcher.add_handler(CommandHandler("bid", bid))
 
-    updater.start_polling()
-    updater.idle()
+    # Set the webhook
+    bot.set_webhook(f"{WEBHOOK_URL}/{TOKEN}")
+
+    app.run(port=PORT)
 
 if __name__ == '__main__':
     main()
