@@ -1,66 +1,109 @@
-import telebot
-import sqlite3
+import os
+from dotenv import load_dotenv
+from flask import Flask, request, jsonify
+import pyTelegramBotAPI as botapi
 
-# Initialize the bot
-bot = telebot.TeleBot("7318782651:AAHtdSnQyf0SPBD3GEPJ-vxBxOrdxUmjA44")
+load_dotenv()
 
-# Database setup (use SQLite or any other database)
-conn = sqlite3.connect("auction.db")
-cursor = conn.cursor()
+app = Flask(__name__)
 
-# Create tables (users, products, bids, etc.)
-# Example: users (id INTEGER PRIMARY KEY, username TEXT, phone TEXT, email TEXT)
-# ...
+@app.route('/bot', methods=['POST'])
+def handle_message():
+    message = json.loads(request.data)['message']
+    if not message.get('text'):
+        return ''
+    
+    user_name = message['from']['username']
+    
+    # Check if the user is registered
+    with open('registered_users.txt') as f:
+        registered_users = set(line.strip() for line in f)
+        
+    if user_name not in registered_users:
+        bot.send_message(chat_id=message['chat']['id'], text='Please register your account to bid!')
+        return ''
+    
+    # Check the command
+    if message.get('text').startswith('/start'):
+        start_command(message)
+    
+    elif message.get('text').startswith('/bid '):
+        bid_product(message)
 
-# Command handlers
-@bot.message_handler(commands=["start"])
-def handle_start(message):
-    # Welcome message and instructions
-    # ...
+def start_command(message):
+    bot.send_message(chat_id=message['chat']['id'], text='Welcome to our auction market! You can see all products with the /show command.')
+    # Add user to registered users list
+    with open('registered_users.txt', 'a') as f:
+        f.write(f'{message["from"]["username"]}\n')
 
-@bot.message_handler(commands=["register"])
-def handle_register(message):
-    # Collect user registration data
-    user_id = message.from_user.id
-    username = message.from_user.username
-    name = message.text  # Assuming the user sends their name
-    phone = message.text  # Assuming the user sends their phone number
-    email = message.text  # Assuming the user sends their email
+def bid_product(message):
+    product_id = int(message.get('text')[5:])
+    
+    # Check if the product exists and is still available for bidding
+    products_data = {}
+    with open('products.txt') as f:
+        products = [line.strip().split(',') for line in f]
+        
+    if str(product_id) not in [product[0] for product in products]:
+        bot.send_message(chat_id=message['chat']['id'], text='This product is no longer available.')
+        return
+    
+    # Get the current bid price and update it
+    current_bid = float([product[1] for product in products if str(product_id) == product[0]][0])
+    
+    new_bid = float(message.get('text')[6:])
+    
+    if new_bid > current_bid:
+        with open('products.txt', 'w') as f:
+            for i, line in enumerate(f):
+                fields = line.strip().split(',')
+                
+                if str(product_id) == fields[0]:
+                    f.write(f'{product_id},{new.bid}\n')
+                    break
+        
+        bot.send_message(chat_id=message['chat']['id'], text=f'Your bid of {new_bid} has been accepted!')
+    
+    # Show all products that are still available for bidding
+    show_all_products(message)
 
-    # Store registration data in the database
-    cursor.execute("INSERT INTO users (id, username, name, phone, email) VALUES (?, ?, ?, ?, ?)",
-                   (user_id, username, name, phone, email))
-    conn.commit()
+def show_all_products(message):
+    with open('products.txt') as f:
+        products = [line.strip().split(',') for line in f]
+        
+        bot.send_message(chat_id=message['chat']['id'], text='Current bids:')
+        
+        for product in products:
+            if float(product[1]) > 0.0:  # Only show products that are still available
+                bot.send_photo(message['chat']['id'], photo=open(f'images/{product[2]}', 'rb'))
+                
+                bid_message = f'{product_id} - {float(product[1]):.2f}'
+            
+            else:
+                continue
+        
+        with open('registered_users.txt') as f:
+            registered_usernames = set(line.strip() for line in f)
+        
+        bot.send_message(chat_id=message['chat']['id'], text='To place a bid, simply start typing the product ID and your desired price!')
 
-    # Send a welcome message
-    bot.reply_to(message, f"Welcome, {name}! You're now registered.")
+if __name__ == '__main__':
+    load_dotenv()
+    
+    with open('products.txt') as f:
+        products = [line.strip().split(',') for line in f]
+        
+        registered_users = set(line.strip() for line in open('registered_users.txt'))
+        
+        # Initialize the bot
+        TOKEN = os.environ.get("7318782651:AAHtdSnQyf0SPBD3GEPJ-vxBxOrdxUmjA44")
+        bot_token = str(TOKEN)
+    
+    with open('bot.log', 'w') as log_file:
+            logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s: %(message)s')
+        
+            apihelper. set_stream_handler(log_file)
+            
+        my_bot = botapi.Bot(bot_token=bot_token)
 
-@bot.message_handler(commands=["addproduct"])
-def handle_add_product(message):
-    # Collect product details (picture, starting bid, etc.)
-    # Store in the database
-    # Notify users about the new product
-    # ...
-
-@bot.message_handler(commands=["bid"])
-def handle_bid(message):
-    # Collect bid details (product ID, bid amount)
-    # Update the bid in the database
-    # Calculate and display live price
-    # ...
-
-@bot.message_handler(commands=["products"])
-def handle_products(message):
-    # Fetch all products from the database
-    cursor.execute("SELECT * FROM products")
-    products = cursor.fetchall()
-
-    # Display products to the user
-    product_list = "\n".join(f"{product[0]}. {product[1]} - Starting bid: {product[2]}" for product in products)
-    bot.reply_to(message, f"Current products on auction:\n{product_list}")
-
-# Other message handlers (e.g., handling text messages, images, etc.)
-# ...
-
-# Start the bot
-bot.polling()
+    app.run(debug=True)
