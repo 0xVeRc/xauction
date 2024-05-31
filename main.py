@@ -42,10 +42,11 @@ def add_product(update: Update, context: CallbackContext) -> None:
     """Add a new product to the auction."""
     user = update.message.from_user
     if user.username == OWNER_USERNAME:
-        if context.args and len(context.args) >= 2:
-            product_name = context.args[0]
-            starting_bid = float(context.args[1])
-            photo = update.message.photo[-1] if update.message.photo else None
+        args = context.args
+        photo = update.message.photo[-1] if update.message.photo else None
+        if args and len(args) >= 2 and photo:
+            product_name = args[0]
+            starting_bid = float(args[1])
             auction_data.append({
                 'product_name': product_name,
                 'starting_bid': starting_bid,
@@ -56,7 +57,7 @@ def add_product(update: Update, context: CallbackContext) -> None:
             context.bot.send_message(chat_id=update.effective_chat.id, text="Product added successfully!")
             notify_users(context)
         else:
-            context.bot.send_message(chat_id=update.effective_chat.id, text="Usage: /add_product <product_name> <starting_bid>")
+            context.bot.send_message(chat_id=update.effective_chat.id, text="Usage: /add_product <product_name> <starting_bid> with a photo.")
     else:
         context.bot.send_message(chat_id=update.effective_chat.id, text="You are not authorized to add products.")
 
@@ -72,8 +73,7 @@ def products(update: Update, context: CallbackContext) -> None:
             if product['photo']:
                 context.bot.send_photo(chat_id=update.effective_chat.id, photo=product['photo'].file_id, caption=f"{product['product_name']} - Current Bid: ${product['current_bid']}")
             else:
-                context.bot.send_message(chat_id=update.
-effective_chat.id, text=f"{product['product_name']} - Current Bid: ${product['current_bid']}")
+                context.bot.send_message(chat_id=update.effective_chat.id, text=f"{product['product_name']} - Current Bid: ${product['current_bid']}")
     else:
         context.bot.send_message(chat_id=update.effective_chat.id, text="No products currently on auction.")
 
@@ -81,9 +81,10 @@ def bid(update: Update, context: CallbackContext) -> None:
     """Place a bid on a product."""
     user = update.message.from_user
     if user.username in users_data:
-        if context.args and len(context.args) == 2:
-            product_name = context.args[0]
-            bid_amount = float(context.args[1])
+        args = context.args
+        if args and len(args) == 2:
+            product_name = args[0]
+            bid_amount = float(args[1])
             for product in auction_data:
                 if product['product_name'] == product_name:
                     if bid_amount > product['current_bid']:
