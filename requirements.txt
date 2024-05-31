@@ -1,2 +1,2 @@
 pyTelegramBotAPI==3.6.5
-python-dotenv==0.24
+python-dotenv==0.8.2
