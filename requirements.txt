@@ -1,2 +1,2 @@
-python-telegram-bot==13.11
-flask==2.0.2
+python-telegram-bot==13.12
+pandas
