@@ -1,155 +1,95 @@
-import logging
-from telegram import Update, InputMediaPhoto
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext, Dispatcher
-from telegram import Bot
-from flask import Flask, request, jsonify
-import threading
-import time
-import pandas as pd
+import telebot
+import sqlite3
 
-# Enable logging
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
-)
-logger = logging.getLogger(__name__)
+# Initialize the bot
+bot = telebot.TeleBot("7318782651:AAHtdSnQyf0SPBD3GEPJ-vxBxOrdxUmjA44")
 
-# Initialize auction data
-auction_data = []
-users_data = {}
+# Database setup (use SQLite or any other database)
+conn = sqlite3.connect("auction.db")
+cursor = conn.cursor()
 
-# Constants
-OWNER_USERNAME = '@ojjrr'
-TOKEN = "7318782651:AAHtdSnQyf0SPBD3GEPJ-vxBxOrdxUmjA44"
-PORT = 8443
-WEBHOOK_URL = 'https://your-ngrok-url.ngrok.io'
+# Create tables (users, products, bids, etc.)
+# Example: users (id INTEGER PRIMARY KEY, username TEXT, phone TEXT, email TEXT)
+# ...
 
-app = Flask(__name__)
-bot = Bot(TOKEN)
+# Command handlers
+@bot.message_handler(commands=["start"])
+def handle_start(message):
+    # Welcome message and instructions
+    # ...
 
-# Create the dispatcher with a worker thread
-dispatcher = Dispatcher(bot, None, workers=1)
+@bot.message_handler(commands=["register"])
+def handle_register(message):
+    # Collect user registration data
+    # Store in the database
+    # ...
 
-def start(update: Update, context: CallbackContext) -> None:
-    """Send a message when the command /start is issued."""
-    user = update.message.from_user
-    if user.username not in users_data:
-        context.bot.send_message(chat_id=update.effective_chat.id, text="Welcome! Please register by sending your name, phone number (with country code), and email.")
-    else:
-        context.bot.send_message(chat_id=update.effective_chat.id, text="Welcome back! Type /products to see all auction products.")
+@bot.message_handler(commands=["addproduct"])
+def handle_add_product(message):
+    # Collect product details (picture, starting bid, etc.)
+    # Store in the database
+    # Notify users about the new product
+    # ...
 
-def register(update: Update, context: CallbackContext) -> None:
-    """Register a new user."""
-    user = update.message.from_user
-    text = update.message.text.split('\n')
-    if len(text) == 3:
-        users_data[user.username] = {
-            'name': text[0],
-            'phone': text[1],
-            'email': text[2]
-        }
-        context.bot.send_message(chat_id=update.effective_chat.id, text="Registration successful! Type /products to see all auction products.")
-    else:
-        context.bot.send_message(chat_id=update.effective_chat.id, text="Invalid format. Please send your name, phone number (with country code), and email in separate lines.")
+@bot.message_handler(commands=["bid"])
+def handle_bid(message):
+    # Collect bid details (product ID, bid amount)
+    # Update the bid in the database
+    # Calculate and display live price
+    # ...
 
-def add_product(update: Update, context: CallbackContext) -> None:
-    """Add a new product to the auction."""
-    user = update.message.from_user
-    if user.username == OWNER_USERNAME:
-        args = context.args
-        photo = update.message.photo[-1] if update.message.photo else None
-        if args and len(args) >= 2 and photo:
-            product_name = args[0]
-            starting_bid = float(args[1])
-            auction_data.append({
-                'product_name': product_name,
-                'starting_bid': starting_bid,
-                'current_bid': starting_bid,
-                'current_bidder': None,
-                'photo': photo
-            })
-            context.bot.send_message(chat_id=update.effective_chat.id, text="Product added successfully!")
-            notify_users(context)
-        else:
-            context.bot.send_message(chat_id=update.effective_chat.id, text="Usage: /add_product <product_name> <starting_bid> with a photo.")
-    else:
-        context.bot.send_message(chat_id=update.effective_chat.id, text="You are not authorized to add products.")
+@bot.message_handler(commands=["products"])
+def handle_products(message):
+    # Fetch all products from the database
+    # Display to the user
+    # ...
 
-def notify_users(context: CallbackContext) -> None:
-    """Notify all registered users about the new product."""
-    for username in users_data:
-        context.bot.send_message(chat_id=username, text="A new product is up for auction! Type /products to see details.")
+# Other message handlers (e.g., handling text messages, images, etc.)
+# ...
 
-def products(update: Update, context: CallbackContext) -> None:
-    """Show all products currently on auction."""
-    if auction_data:
-        for product in auction_data:
-            if product['photo']:
-                context.bot.send_photo(chat_id=update.effective_chat.id, photo=product['photo'].file_id, caption=f"{product['product_name']} - Current Bid: ${product['current_bid']}")
-            else:
-                context.bot.send_message(chat_id=update.effective_chat.id, text=f"{product['product_name']} - Current Bid: ${product['current_bid']}")
-    else:
-        context.bot.send_message(chat_id=update.effective_chat.id, text="No products currently on auction.")
+@bot.message_handler(commands=["register"])
+def handle_register(message):
+    # Collect user registration data
+    user_id = message.from_user.id
+    username = message.from_user.username
+    name = message.text  # Assuming the user sends their name
+    phone = message.text  # Assuming the user sends their phone number
+    email = message.text  # Assuming the user sends their email
 
-def bid(update: Update, context: CallbackContext) -> None:
-    """Place a bid on a product."""
-    user = update.message.from_user
-    if user.username in users_data:
-        args = context.args
-        if args and len(args) == 2:
-            product_name = args[0]
-            bid_amount = float(args[1])
-            for product in auction_data:
-                if product['product_name'] == product_name:
-                    if bid_amount > product['current_bid']:
-                        product['current_bid'] = bid_amount
-                        product['current_bidder'] = user.username
-                        context.bot.send_message(chat_id=update.effective_chat.id, text="Bid placed successfully!")
-                        notify_users_about_bid(context, product)
-                    else:
-                        context.bot.send_message(chat_id=update.effective_chat.id, text="Bid amount must be higher than the current bid.")
-                    return
-            context.bot.send_message(chat_id=update.effective_chat.id, text="Product not found.")
-        else:
-            context.bot.send_message(chat_id=update.effective_chat.id, text="Usage: /bid <product_name> <bid_amount>")
-    else:
-        context.bot.send_message(chat_id=update.effective_chat.id, text="You must register first by sending your name, phone number, and email.")
+    # Store registration data in the database
+    cursor.execute("INSERT INTO users (id, username, name, phone, email) VALUES (?, ?, ?, ?, ?)",
+                   (user_id, username, name, phone, email))
+    conn.commit()
 
-def notify_users_about_bid(context: CallbackContext, product) -> None:
-    """Notify all registered users about the new bid."""
-    for username in users_data:
-        context.bot.send_message(chat_id=username, text=f"{product['product_name']} - New Bid: ${product['current_bid']} by {product['current_bidder']}")
+    # Send a welcome message
+    bot.reply_to(message, f"Welcome, {name}! You're now registered.")
 
-@app.route(f'/{TOKEN}', methods=['POST'])
-def webhook() -> str:
-    """Process webhook calls."""
-    update = Update.de_json(request.get_json(force=True), bot)
-    dispatcher.process_update(update)
-    return 'ok'
+@bot.message_handler(commands=["addproduct"])
+def handle_add_product(message):
+    # Collect product details (picture, starting bid, etc.)
+    # Store in the database
+    # Notify users about the new product
+    # ...
 
-def run(dispatcher):
-    """Run the dispatcher to process updates."""
-    while True:
-        dispatcher.start()
-        time.sleep(10)
+@bot.message_handler(commands=["bid"])
+def handle_bid(message):
+    # Collect bid details (product ID, bid amount)
+    # Update the bid in the database
+    # Calculate and display live price
+    # ...
 
-def main() -> None:
-    """Start the bot."""
-    global dispatcher
-    dispatcher.add_handler(CommandHandler("start", start))
-    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, register))
-    dispatcher.add_handler(CommandHandler("add_product", add_product, Filters.user(username=OWNER_USERNAME)))
-    dispatcher.add_handler(CommandHandler("products", products))
-    dispatcher.add_handler(CommandHandler("bid", bid))
+@bot.message_handler(commands=["products"])
+def handle_products(message):
+    # Fetch all products from the database
+    cursor.execute("SELECT * FROM products")
+    products = cursor.fetchall()
 
-    # Set the webhook
-    bot.set_webhook(f"{WEBHOOK_URL}/{TOKEN}")
+    # Display products to the user
+    product_list = "\n".join(f"{product[0]}. {product[1]} - Starting bid: {product[2]}" for product in products)
+    bot.reply_to(message, f"Current products on auction:\n{product_list}")
 
-    # Start a thread to run the dispatcher
-    dispatcher_thread = threading.Thread(target=run, args=(dispatcher,))
-    dispatcher_thread.start()
+# Other message handlers (e.g., handling text messages, images, etc.)
+# ...
 
-    # Run the Flask app
-    app.run(port=PORT)
-
-if __name__ == '__main__':
-    main()
+# Start the bot
+bot.polling()
