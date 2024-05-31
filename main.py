@@ -21,35 +21,6 @@ def handle_start(message):
 @bot.message_handler(commands=["register"])
 def handle_register(message):
     # Collect user registration data
-    # Store in the database
-    # ...
-
-@bot.message_handler(commands=["addproduct"])
-def handle_add_product(message):
-    # Collect product details (picture, starting bid, etc.)
-    # Store in the database
-    # Notify users about the new product
-    # ...
-
-@bot.message_handler(commands=["bid"])
-def handle_bid(message):
-    # Collect bid details (product ID, bid amount)
-    # Update the bid in the database
-    # Calculate and display live price
-    # ...
-
-@bot.message_handler(commands=["products"])
-def handle_products(message):
-    # Fetch all products from the database
-    # Display to the user
-    # ...
-
-# Other message handlers (e.g., handling text messages, images, etc.)
-# ...
-
-@bot.message_handler(commands=["register"])
-def handle_register(message):
-    # Collect user registration data
     user_id = message.from_user.id
     username = message.from_user.username
     name = message.text  # Assuming the user sends their name
